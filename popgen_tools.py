@@ -6,37 +6,42 @@ def parse_args():
 	"""
 	Parsing command-line arguments
 	"""
-	parser = argparse.ArgumentParser(description='This script generates a site frequency spectrum and calculates '
-						'genetic diversity, pi in nonoverlapping windows (average number of '
-						'DNA differences between all pairs of sequence).')
+	parser = argparse.ArgumentParser(description='This script generates a site frequency '
+						'spectrum and calculates genetic diversity, pi in nonoverlapping '
+						'windows (average number of DNA differences between '
+						'all pairs of sequence).')
 
 	parser.add_argument('--vcf_file', required=True,
 						help='REQUIRED. Input the path to a VCF file')
 
 	parser.add_argument('--num_chr', required=True,
-						help='REQUIRED. Input the number of chromosomes in your VCF file. The number of alleles '
-							 'is equal to the number of individuals multiplying by 2.')
+						help='REQUIRED. Input the number of chromosomes in your VCF file. '
+							 'The number of chromosomes is equal to the number of individuals '
+							 'multiplying by 2.')
 
 	parser.add_argument('--window_bed', required=False,
-						help='Input the path to the BED file that specifies the coordinates for each '
-							 'nonoverlapping window. This argument is required for the analysis of '
-							 'genetic diversity.')
+						help='Input the path to the BED file that specifies the coordinates '
+							 'for each nonoverlapping window. This argument is required for '
+							 'the analysis of genetic diversity.')
 
 	parser.add_argument('--sfs_out', required=False,
-						help='Input the path for the output file for the site frequency spectrum. '
-							 'If this parameter is not specified, an output file called sfs.out will be output '
-							 'in the current directory.')
+						help='Input the path for the output file for the site frequency '
+							 'spectrum. If this parameter is not specified, an output file '
+							 'called sfs.out will be output in the current directory.')
 
 	parser.add_argument('--pi_out', required=False,
-						help='Input the path for the output file for pi. If this parameter is not specified, '
-							 'an output file called pi.out will be output in the current directory.')
+						help='Input the path for the output file for pi. If this parameter '
+							 'is not specified, an output file called pi.out will be output '
+							 'in the current directory.')
 
 	# Options for turning on/off parts of the pipeline
-	parser.add_argument('--no_sfs', action='store_true', default=False, help='Turn on this flag if you do not want '
-																			 'to generate a site frequency spectrum.')
+	parser.add_argument('--no_sfs', action='store_true', default=False,
+						help='Turn on this flag if you do not want to '
+							 'generate a site frequency spectrum.')
 
-	parser.add_argument('--no_pi', action='store_true', default=False, help='Turn on this flag if you do not want '
-																			'to calculate genetic diversity.')
+	parser.add_argument('--no_pi', action='store_true', default=False,
+						help='Turn on this flag if you do not want to '
+							 'calculate genetic diversity.')
 
 	args = parser.parse_args()
 	return args
