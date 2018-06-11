@@ -1,6 +1,4 @@
 library(ggplot2)
-library(gridExtra)
-library(grid)
 
 inputs = commandArgs(trailingOnly=T)
 
