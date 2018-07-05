@@ -18,23 +18,28 @@ git clone https://github.com/tnphung/popgen_tools.git
 * For usage, do:
 
 ```
-python popgen_tools.py -h                                        [ 1:50PM]
-usage: popgen_tools.py [-h] --vcf_file VCF_FILE [--window_bed WINDOW_BED]
-                       [--sfs_out SFS_OUT] [--pi_out PI_OUT] [--no_sfs]
-                       [--no_pi]
+python popgen_tools.py -h                                       
+usage: popgen_tools.py [-h] --vcf_file VCF_FILE --target_bed TARGET_BED
+                       --names_list NAMES_LIST [--sfs_out SFS_OUT]
+                       [--pi_out PI_OUT] [--no_sfs] [--no_pi]
 
 This script generates a site frequency spectrum and calculates genetic
-diversity, pi in nonoverlapping windows. Pi is defined as the average number
-of DNA differences between all pairs of sequence).
+diversity, pi. Pi is defined as the average number of DNA differences between
+all pairs of sequence).
 
 optional arguments:
   -h, --help            show this help message and exit
-  --vcf_file VCF_FILE   REQUIRED. Input the path to a VCF file
-  --window_bed WINDOW_BED
-                        Input the path to the BED file that specifies the
-                        coordinates for each nonoverlapping window. This
-                        argument is required for the analysis of genetic
-                        diversity.
+  --vcf_file VCF_FILE   REQUIRED. Input the path to a VCF file. Either gzipped
+                        or not gzipped file works.
+  --target_bed TARGET_BED
+                        REQUIRED. Input the path to the BED file that
+                        specifies the coordinates to generate SFS or to
+                        calculate pi. For example, this file specificies the
+                        coordinates for the putatively neutral regions
+  --names_list NAMES_LIST
+                        REQUIRED. Input the path to the file that lists the
+                        individuals from the VCF file that you want to
+                        calculate genetic diversity or to generate the SFS.
   --sfs_out SFS_OUT     Input the path for the output file for the site
                         frequency spectrum. If this parameter is not
                         specified, an output file called sfs.out will be
@@ -47,35 +52,4 @@ optional arguments:
   --no_pi               Turn on this flag if you do not want to calculate
                         genetic diversity.
 
-```
-
-## Examples
-1. To generate the folded site frequency spectrum and calculate genetic diversity:
-
-```
-python popgen_tools.py --vcf_file ~/chr21_10YRI.vcf --window_bed ~/chr21_100kb_nonoverlapping_windows.txt
-```
-
-2. To generate the folded site frequency spectrum only:
-
-```
-python popgen_tools.py --vcf_file ~/chr21_10YRI.vcf --window_bed ~/chr21_100kb_nonoverlapping_windows.txt --no_pi
-```
-
-3. To calculate genetic diversity only:
-
-```
-python popgen_tools.py --vcf_file ~/chr21_10YRI.vcf --window_bed ~/chr21_100kb_nonoverlapping_windows.txt --no_sfs
-```
-
-4. To plot the folded site frequency spectrum:
-
-```
-Rscript plot_sfs.R sfs.out sfs_plot.png
-```
-
-5. To plot genetic diversity:
-
-```
-Rscript plot_genetic_diversity.R pi.out pi_plot.png
 ```
