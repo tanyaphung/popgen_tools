@@ -18,9 +18,14 @@ def parse_args():
 							 'not gzipped file works.')
 
 	parser.add_argument('--target_bed', required=True,
-						help='Input the path to the BED file that specifies the coordinates '
+						help='REQUIRED. Input the path to the BED file that specifies the coordinates '
 							 'to generate SFS or to calculate pi. For example, this file '
 							 'specificies the coordinates for the putatively neutral regions')
+
+	parser.add_argument('--names_list', required=True,
+						help='REQUIRED. Input the path to the file that lists the individuals from '
+							 'the VCF file that you want to calculate genetic diversity '
+							 'or to generate the SFS.')
 
 	parser.add_argument('--sfs_out', required=False,
 						help='Input the path for the output file for the site frequency spectrum. '
@@ -31,11 +36,6 @@ def parse_args():
 						help='Input the path for the output file for pi. If this parameter '
 							 'is not specified, an output file called pi.out will be outputted '
 							 'in the current directory.')
-
-	parser.add_argument('--names_list', required=True,
-						help='Input the path to the file that lists the individuals from '
-							 'the VCF file that you want to calculate genetic diversity '
-							 'or to generate the SFS.')
 
 	# Options for turning on/off parts of the pipeline
 	parser.add_argument('--no_sfs', action='store_true', default=False,
