@@ -1,24 +1,26 @@
 from helper_funcs import *
 import argparse
-import sys
 
+#TODO: Add error checking for inputs
+#TODO: When generating an SFS, allow for the requirement of target bed to be optional
+#TODO: Instead of inputting a list of individuals, the default should be to calculate pi and to generate SFS for all of the individuals in the vcf file
 
 def parse_args():
 	"""
 	Parsing command-line arguments
 	"""
 	parser = argparse.ArgumentParser(description='This script generates a site frequency '
-						'spectrum and calculates genetic diversity, pi in nonoverlapping '
-						'windows. Pi is defined as the average number of DNA differences '
-						'between all pairs of sequence).')
+						'spectrum and calculates genetic diversity, pi. Pi is defined as '
+						'the average number of DNA differences between all pairs of sequence).')
 
 	parser.add_argument('--vcf_file', required=True,
-						help='REQUIRED. Input the path to a VCF file')
+						help='REQUIRED. Input the path to a VCF file. Either gzipped or '
+							 'not gzipped file works.')
 
-	parser.add_argument('--window_bed', required=False,
+	parser.add_argument('--target_bed', required=True,
 						help='Input the path to the BED file that specifies the coordinates '
-							 'for each nonoverlapping window. This argument is required '
-							 'for the analysis of genetic diversity.')
+							 'to generate SFS or to calculate pi. For example, this file '
+							 'specificies the coordinates for the putatively neutral regions')
 
 	parser.add_argument('--sfs_out', required=False,
 						help='Input the path for the output file for the site frequency spectrum. '
@@ -29,6 +31,11 @@ def parse_args():
 						help='Input the path for the output file for pi. If this parameter '
 							 'is not specified, an output file called pi.out will be outputted '
 							 'in the current directory.')
+
+	parser.add_argument('--names_list', required=True,
+						help='Input the path to the file that lists the individuals from '
+							 'the VCF file that you want to calculate genetic diversity '
+							 'or to generate the SFS.')
 
 	# Options for turning on/off parts of the pipeline
 	parser.add_argument('--no_sfs', action='store_true', default=False,
@@ -49,19 +56,14 @@ def main():
 
 	if args.no_sfs is not True:
 
-		# Checking inputs
-		if not args.vcf_file.endswith('.vcf'):
-			sys.exit("Error: not a VCF file. "
-					 "Provide a VCF file format for the argument --vcf_file.")
-
-		# Calculate the number of sequences
-		num_seq = count_num_seq(args.vcf_file)
+		# Find the index of the individuals whose genetic diversity you want to calculate
+		names_index = find_index(args.vcf_file, args.names_list)
 
 		# Calculate the number of alternate alleles for each variant.
-		alt_allele_count = count_alt_allele(args.vcf_file)
+		alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
 
 		# Generate a folded site frequency spectrum
-		sfs = make_sfs(num_seq, alt_allele_count)
+		sfs = make_sfs(len(names_index)*2, alt_allele_count)
 
 		if args.sfs_out:
 			outfile = open(args.sfs_out, 'w')
@@ -87,40 +89,33 @@ def main():
 
 	if args.no_pi is not True:
 
-		# Checking inputs
-		if not args.vcf_file.endswith('.vcf'):
-			sys.exit("Error: not a VCF file. "
-					 "Provide a VCF file format for the argument --vcf_file.")
-
-		if not args.window_bed.endswith('.bed'):
-			sys.exit("Error: not a BED file. "
-					 "Provide a BED file format for the argument --window_bed.")
-
-		# Calculate the number of sequences
-		num_seq = count_num_seq(args.vcf_file)
+		# Find the index of the individuals whose genetic diversity you want to calculate
+		names_index = find_index(args.vcf_file, args.names_list)
 
 		# Calculate genetic diversity, pi
-		variants_af = compute_af(args.vcf_file, num_seq)
-		total_pi_adjusted = compute_pi(args.window_bed, variants_af, num_seq)
+		variants_af = compute_af(args.vcf_file, names_index)
+
+		# Calculate adjusted pi
+		total_pi_adjusted = compute_pi(args.target_bed, variants_af, len(names_index)*2)
 
 		if args.pi_out:
 			outfile = open(args.pi_out, 'w')
-			header = ['start', 'end', 'pi', 'pi_per_site']
+			header = ['start', 'end', 'pi']
 			outfile.write('\t'.join(header) + '\n')
 
 			for k, v in total_pi_adjusted.items():
-				out = [str(k[0]), str(k[1]), str(v), str(float(v)/(k[1]-k[0]))]
+				out = [str(k[0]), str(k[1]), str(v)]
 				outfile.write('\t'.join(out) + '\n')
 
 			outfile.close()
 
 		else:
 			outfile = open('pi.out', 'w')
-			header = ['start', 'end', 'pi', 'pi_per_site']
+			header = ['start', 'end', 'pi']
 			outfile.write('\t'.join(header) + '\n')
 
 			for k, v in total_pi_adjusted.items():
-				out = [str(k[0]), str(k[1]), str(v), str(float(v) / (k[1] - k[0]))]
+				out = [str(k[0]), str(k[1]), str(v)]
 				outfile.write('\t'.join(out) + '\n')
 
 			outfile.close()

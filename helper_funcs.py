@@ -1,47 +1,70 @@
 import collections
+import gzip
 
 
-def count_num_seq(vcf_file):
-    """
-    This function calculates the number of sequences in the VCF file
-    :param vcf_file: a VCF file
-    :return: a number. Number of sequences in the VCF file. For now, assume the species
-    is diploid.
-    """
-    num_seq = 0
-    with open(vcf_file, 'r') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if line.startswith('#CHROM'): #remove #
-                line = line.split('\t')
-                num_seq = (len(line[9:]))*2
-                break
-    return num_seq
+def file_test(vcf_file):
+    if vcf_file.endswith('.gz'):
+        return gzip.open
+    else:
+        return open
 
+def find_index(vcf_file, names_file):
+    index = {}
 
-def count_alt_allele(vcf_file):
-    """
-    This function calculates the number of alternate alleles for each variant.
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            if line.startswith('#CHROM'):
+                items = line.split('\t')
+                for i in range(9, len(items)):
+                    index[items[i]] = i
 
-    :param vcf_file: a VCF file
-    :return: a list where each item in the list is the count of the alternate allele
-    for each variant
-    """
+    name_index = []
+    with open(names_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            name = line.split('\t')[0]
+            name_index.append(index[name])
+    return name_index
+
+def count_alt_allele(vcf_file, names_index, bed_file):
+    ranges = []
+    with open(bed_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            items = line.split('\t')
+            ranges.append((int(items[1]), int(items[2])))
+
     alt_allele_count = []
-    with open(vcf_file, 'r') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if not line.startswith('#'): #remove #
-                line = line.split('\t')
-                count = 0
-                for i in range(9, len(line)):
-                    genotype = line[i]
-                    if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
-                            or genotype == '1/0':
-                        count += 1
-                    if genotype == '1|1' or genotype == '1/1':
-                        count += 2
-                alt_allele_count.append(count)
+
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            if not line.startswith('#'):
+                items = line.split('\t')
+                if any(lower <= int(items[1]) - 1 < upper for (lower, upper) in ranges):
+                    count = 0
+                    if items[8] == 'GT':
+                        for i in names_index:
+                            genotype = items[i]
+                            if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                    or genotype == '1/0':
+                                count += 1
+                            if genotype == '1|1' or genotype == '1/1':
+                                count += 2
+                        alt_allele_count.append(count)
+
+                    else:
+                        for i in names_index:
+                            genotype = items[i].split(':')[0]
+                            if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                    or genotype == '1/0':
+                                count += 1
+                            if genotype == '1|1' or genotype == '1/1':
+                                count += 2
+                        alt_allele_count.append(count)
     return alt_allele_count
 
 
@@ -73,44 +96,49 @@ def make_sfs(num_seq, alt_allele_count):
     return sfs
 
 
-def compute_af(vcf_file, num_seq):
-    """
-    This function computes the allele frequency for each variant
+def compute_af(vcf_file, names_index):
 
-    :param vcf_file: a VCF file
-    :param num_seq: number of chromosome in the VCF file
-    :return: a dictionary where key is the position of the variant and value is the
-    allele frequency of that variant
-    """
     variants_af = {}
-    with open(vcf_file, 'r') as f:
-        for line in f:
-            line = line.rstrip('\n')
+
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
             if not line.startswith('#'):
-                line = line.split('\t')
+                items = line.split('\t')
                 count = 0
-                for i in range(9, len(line)):
-                    genotype = line[i]
-                    if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
-                        count += 1
-                    if genotype == '1|1' or genotype == '1/1':
-                        count += 2
-                variants_af[int(line[1])] = float(count)/num_seq
+                if items[8] == 'GT':
+                    for i in names_index:
+                        genotype = items[i]
+                        if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
+                            count += 1
+                        if genotype == '1|1' or genotype == '1/1':
+                            count += 2
+                    variants_af[int(items[1])-1] = float(count)/num_seq
+
+                else:
+                    for i in names_index:
+                        genotype = items[i].split(':')[0]
+                        if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
+                            count += 1
+                        if genotype == '1|1' or genotype == '1/1':
+                            count += 2
+                    variants_af[int(items[1])-1] = float(count) / (len(names_index)*2)
     return variants_af
 
 
-def compute_pi(window_file, variants_af, num_seq):
+def compute_pi(bed_file, variants_af, num_seq):
     """
-    This function computes pi in each nonoverlapping window
+    This function computes pi in each nonoverlapping bed
 
-    :param window_file: a BED file specifying the coordinates for each nonoverlapping window
+    :param bed_file: a BED file specifying the coordinates for each nonoverlapping bed
     :param variants_af: a dictionary where key is the position of the variant and value
     is the allele frequency of that variant. This is the output from the function compute_af.
     :param num_seq: number of sequences in the VCF file
-    :return: a dictionary where key is the (start, end) coordinates and value is pi for that window.
+    :return: a dictionary where key is the (start, end) coordinates and value is pi for that bed.
     """
-    windows_pi = {}
-    with open(window_file, 'r') as f:
+    beds_pi = {}
+    with open(bed_file, 'r') as f:
         for line in f:
             line = line.rstrip('\n')
             line = line.split('\t')
@@ -123,7 +151,8 @@ def compute_pi(window_file, variants_af, num_seq):
                     pi = 2* af * (1-af)
                     total_pi += pi
             total_pi_adjusted = (num_seq/(num_seq-1))*total_pi
+            beds_pi[(start, end)] = total_pi_adjusted
 
-            windows_pi[(start, end)] = total_pi_adjusted
-    return windows_pi
+
+    return beds_pi
 
