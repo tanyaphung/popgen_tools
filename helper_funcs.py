@@ -19,6 +19,7 @@ def find_index(vcf_file, names_file):
                 items = line.split('\t')
                 for i in range(9, len(items)):
                     index[items[i]] = i
+                break
 
     name_index = []
     with open(names_file, 'r') as f:
@@ -98,7 +99,8 @@ def make_sfs(num_seq, alt_allele_count):
 
 def compute_af(vcf_file, names_index):
 
-    variants_af = {}
+    variants = []
+    afs = []
 
     open_func = file_test(vcf_file)
     with open_func(vcf_file, 'r') as f:
@@ -114,7 +116,8 @@ def compute_af(vcf_file, names_index):
                             count += 1
                         if genotype == '1|1' or genotype == '1/1':
                             count += 2
-                    variants_af[int(items[1])-1] = float(count)/num_seq
+                    variants.append(int(items[1])-1)
+                    afs.append(float(count) / (len(names_index)*2))
 
                 else:
                     for i in names_index:
@@ -123,36 +126,50 @@ def compute_af(vcf_file, names_index):
                             count += 1
                         if genotype == '1|1' or genotype == '1/1':
                             count += 2
-                    variants_af[int(items[1])-1] = float(count) / (len(names_index)*2)
-    return variants_af
+                    variants.append(int(items[1]) - 1)
+                    afs.append(float(count) / (len(names_index)*2))
+    return variants, afs
+
+def calculate(num):
+    return 2*num*(1-num)
 
 
-def compute_pi(bed_file, variants_af, num_seq):
-    """
-    This function computes pi in each nonoverlapping bed
+# def compute_pi(bed_file, variants, afs, num_seq):
+#
+#     beds_pi = {}
+#     with open(bed_file, 'r') as f:
+#         for line in f:
+#             # s, e = line.split('\t'[1:])
+#             line = line.rstrip('\n')
+#             line = line.split('\t')
+#             start = int(line[1])
+#             end = int(line[2])
+#
+#             total_pi = 0
+#             for i in range(len(variants)):
+#                 if start <= variants[i] and variants[i] < end:
+#                     pi = 2* afs[i] * (1-afs[i])
+#                     total_pi += pi
+#                 elif variants[i] >= end:
+#                     break
+#
+#             total_pi_adjusted = (num_seq/(num_seq-1))*total_pi
+#             beds_pi[(start, end)] = total_pi_adjusted
+#
+#     return beds_pi
 
-    :param bed_file: a BED file specifying the coordinates for each nonoverlapping bed
-    :param variants_af: a dictionary where key is the position of the variant and value
-    is the allele frequency of that variant. This is the output from the function compute_af.
-    :param num_seq: number of sequences in the VCF file
-    :return: a dictionary where key is the (start, end) coordinates and value is pi for that bed.
-    """
+def compute_pi(bed_file, variants, afs, num_seq):
+    vals_in = zip(*(variants, afs))
+    out_dict = {}
     beds_pi = {}
     with open(bed_file, 'r') as f:
         for line in f:
-            line = line.rstrip('\n')
-            line = line.split('\t')
-            start = int(line[1])
-            end = int(line[2])
-            total_pi = 0
-            for variant in variants_af.keys():
-                if start <= variant and variant < end:
-                    af = variants_af[variant]
-                    pi = 2* af * (1-af)
-                    total_pi += pi
-            total_pi_adjusted = (num_seq/(num_seq-1))*total_pi
-            beds_pi[(start, end)] = total_pi_adjusted
+            _, s, e = line.split('\t')
+            se_list = []
+            for i in range(int(s), int(e)):
+                out_dict[i] = se_list
+            beds_pi[(int(s), int(e))] = se_list
 
+    list(map(lambda v: out_dict.get(int(v[0]), []).append(calculate(float(v[1]))), vals_in))
 
-    return beds_pi
-
+    return {k: (sum(v))*(num_seq/(num_seq-1)) for (k, v) in beds_pi.items()}

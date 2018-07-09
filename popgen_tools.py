@@ -96,7 +96,10 @@ def main():
 		variants_af = compute_af(args.vcf_file, names_index)
 
 		# Calculate adjusted pi
-		total_pi_adjusted = compute_pi(args.target_bed, variants_af, len(names_index)*2)
+		total_pi_adjusted = compute_pi(args.target_bed, variants_af[0], variants_af[1], len(names_index)*2)
+
+		# for k, v in total_pi_adjusted.items():
+		# 	print (k[0], k[1], v)
 
 		if args.pi_out:
 			outfile = open(args.pi_out, 'w')
