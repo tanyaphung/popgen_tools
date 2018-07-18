@@ -120,12 +120,15 @@ def compute_af(vcf_file, names_index):
                     afs.append(float(count) / (len(names_index)*2))
 
                 else:
-                    for i in names_index:
-                        genotype = items[i].split(':')[0]
-                        if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
-                            count += 1
-                        if genotype == '1|1' or genotype == '1/1':
-                            count += 2
+                    genotypes = [items[i].split(':')[0] for i in names_index]
+                    if not any(i == './.' for i in genotypes):
+                        for genotype in genotypes:
+                    # for i in names_index:
+                    #     genotype = items[i].split(':')[0]
+                            if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
+                                count += 1
+                            if genotype == '1|1' or genotype == '1/1':
+                                count += 2
                     variants.append(int(items[1]) - 1)
                     afs.append(float(count) / (len(names_index)*2))
     return variants, afs
@@ -172,4 +175,23 @@ def compute_pi(bed_file, variants, afs, num_seq):
 
     list(map(lambda v: out_dict.get(int(v[0]), []).append(calculate(float(v[1]))), vals_in))
 
-    return {k: (sum(v))*(num_seq/(num_seq-1)) for (k, v) in beds_pi.items()}
+    return {k: (sum(v))*(num_seq/(num_seq-1)) for (k, v) in beds_pi.items()}, {k: len(v) for (k, v) in beds_pi.items()}
+
+
+def tabulate_callable_sites_each_window(windows, targets):
+    window_callable_sites = {}
+    for each_window in windows:
+        callable_sites = 0
+        for each_target in targets:
+            if each_target[0] >= each_window[0] and each_target[0] < each_window[1]:
+                if (each_target[1]-1) <= (each_window[1]-1):
+                    callable_sites += each_target[1] - each_target[0]
+                elif (each_target[1]-1) > (each_window[1]-1):
+                    callable_sites += each_window[1] - each_target[0]
+            elif each_target[0] < each_window[0] and each_target[1] > each_window[0]:
+                if (each_target[1]-1) < (each_window[1]-1):
+                    callable_sites += each_target[1] - each_window[0]
+                elif (each_target[1]-1) > (each_window[1]-1):
+                    callable_sites += each_window[1] - each_window[0]
+        window_callable_sites[each_window] = callable_sites
+    return window_callable_sites

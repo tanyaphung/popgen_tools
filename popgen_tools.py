@@ -17,16 +17,21 @@ def parse_args():
 						help='REQUIRED. Input the path to a VCF file. Either gzipped or '
 							 'not gzipped file works.')
 
-	parser.add_argument('--target_bed', required=True,
-						help='REQUIRED. Input the path to the BED file that specifies the coordinates '
-							 'to generate SFS or to calculate pi. For example, this file '
-							 'specificies the coordinates for the putatively neutral regions')
-
 	parser.add_argument('--names_list', required=True,
 						help='REQUIRED. Input the path to the file that lists the individuals from '
 							 'the VCF file that you want to calculate genetic diversity '
-							 'or to generate the SFS.')
+							 'or to generate the SFS.')  #TODO: make this optional and the default is to use all of the individuals in the VCF file
 
+	parser.add_argument('--target_bed', required=False,
+						help='Input the path to the BED file that specifies the coordinates '
+							 'to generate SFS or to calculate pi. For example, this file '
+							 'specificies the coordinates for the putatively neutral regions.')
+
+	parser.add_argument('--window_bed', required=False,
+						help='Input the path the the BED file that specifies the coordinates '
+							 'for nonoverlapping windows.')
+
+	# Providing the output files
 	parser.add_argument('--sfs_out', required=False,
 						help='Input the path for the output file for the site frequency spectrum. '
 							 'If this parameter is not specified, an output file called '
@@ -37,6 +42,9 @@ def parse_args():
 							 'is not specified, an output file called pi.out will be outputted '
 							 'in the current directory.')
 
+	parser.add_argument('--total_SNPs', required=False,
+						help='Input the path to the output file for the number of SNPs.') #TODO: make outputing the number of SNPs an option.
+
 	# Options for turning on/off parts of the pipeline
 	parser.add_argument('--no_sfs', action='store_true', default=False,
 						help='Turn on this flag if you do not want '
@@ -45,6 +53,11 @@ def parse_args():
 	parser.add_argument('--no_pi', action='store_true', default=False,
 						help='Turn on this flag if you do not want '
 							 'to calculate genetic diversity.')
+
+	parser.add_argument('--window', action='store_true', default=False,
+						help='Turn on this flag if you want to calculate genetic diversity'
+							 ' in windows. The default when calculating pi is to calculate'
+							 ' pi in the target regions.')
 
 	args = parser.parse_args()
 	return args
@@ -65,63 +78,75 @@ def main():
 		# Generate a folded site frequency spectrum
 		sfs = make_sfs(len(names_index)*2, alt_allele_count)
 
-		if args.sfs_out:
-			outfile = open(args.sfs_out, 'w')
-			header = ['frequency', 'num_variants']
-			outfile.write('\t'.join(header) + '\n')
+		outfile = open(args.sfs_out, 'w')
+		header = ['frequency', 'num_variants']
+		outfile.write('\t'.join(header) + '\n')
 
-			for k, v in sfs.items():
-				out = [str(k), str(v)]
-				outfile.write('\t'.join(out) + '\n')
+		for k, v in sfs.items():
+			out = [str(k), str(v)]
+			outfile.write('\t'.join(out) + '\n')
 
-			outfile.close()
-
-		else:
-			outfile = open('sfs.out', 'w')
-			header = ['frequency', 'num_variants']
-			outfile.write('\t'.join(header) + '\n')
-
-			for k, v in sfs.items():
-				out = [str(k), str(v)]
-				outfile.write('\t'.join(out) + '\n')
-
-			outfile.close()
+		outfile.close()
 
 	if args.no_pi is not True:
 
-		# Find the index of the individuals whose genetic diversity you want to calculate
-		names_index = find_index(args.vcf_file, args.names_list)
+		if args.window is not True: #calculate pi not in non-overlapping windows
+			# Find the index of the individuals whose genetic diversity you want to calculate
+			names_index = find_index(args.vcf_file, args.names_list)
 
-		# Calculate genetic diversity, pi
-		variants_af = compute_af(args.vcf_file, names_index)
+			# Calculate allele frequency
+			variants_af = compute_af(args.vcf_file, names_index)
 
-		# Calculate adjusted pi
-		total_pi_adjusted = compute_pi(args.target_bed, variants_af[0], variants_af[1], len(names_index)*2)
+			# Calculate adjusted pi
+			adjusted_pi = compute_pi(args.target_bed, variants_af[0], variants_af[1], len(names_index)*2)
 
-		# for k, v in total_pi_adjusted.items():
-		# 	print (k[0], k[1], v)
-
-		if args.pi_out:
-			outfile = open(args.pi_out, 'w')
-			header = ['start', 'end', 'pi']
-			outfile.write('\t'.join(header) + '\n')
-
-			for k, v in total_pi_adjusted.items():
+			# Save output for genetic diversity in a file
+			pi_outfile = open(args.pi_out, 'w')
+			for k, v in adjusted_pi[0].items():
 				out = [str(k[0]), str(k[1]), str(v)]
-				outfile.write('\t'.join(out) + '\n')
+				pi_outfile.write('\t'.join(out) + '\n')
+			pi_outfile.close()
 
-			outfile.close()
+			# Save output for the number of SNPs in a file
+			total_SNPs_outfile = open(args.total_SNPs, 'w')
+			for k, v in adjusted_pi[1].items():
+				out = [str(k[0]), str(k[1]), str(v)]
+				total_SNPs_outfile.write('\t'.join(out) + '\n')
+			total_SNPs_outfile.close()
 
 		else:
-			outfile = open('pi.out', 'w')
-			header = ['start', 'end', 'pi']
-			outfile.write('\t'.join(header) + '\n')
+			# Find the index of the individuals whose genetic diversity you want to calculate
+			names_index = find_index(args.vcf_file, args.names_list)
 
-			for k, v in total_pi_adjusted.items():
-				out = [str(k[0]), str(k[1]), str(v)]
-				outfile.write('\t'.join(out) + '\n')
+			# Calculate allele frequency
+			variants_af = compute_af(args.vcf_file, names_index)
 
-			outfile.close()
+			# Calculate adjusted pi
+			adjusted_pi = compute_pi(args.window_bed, variants_af[0], variants_af[1], len(names_index)*2)
+
+			# Calculate the total callable site in each window
+			windows = []
+			with open(args.window_bed, 'r') as f:
+				for line in f:
+					_, s, e = line.split('\t')
+					windows.append((int(s), int(e)))
+
+			targets = []
+			with open(args.target_bed, 'r') as f:
+				for line in f:
+					_, s, e = line.split('\t')
+					targets.append((int(s), int(e)))
+
+			total_callable = tabulate_callable_sites_each_window(windows, targets)
+
+			pi_outfile = open(args.pi_out, 'w')
+
+			for k, v in adjusted_pi[0].items():
+				if total_callable[k] != 0:
+					out = [str(k[0]), str(k[1]), str(total_callable[k]), str(v)]
+					pi_outfile.write('\t'.join(out) + '\n')
+
+			pi_outfile.close()
 
 
 if __name__ == '__main__':
