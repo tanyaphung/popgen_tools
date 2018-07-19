@@ -14,7 +14,6 @@ git clone https://github.com/tnphung/popgen_tools.git
 ## Usage and Examples
 
 * This script generates a site frequency spectrum (SFS) and calculates genetic diversity (pi). Users have the option turning on or off parts of the pipeline (i.e. generating the SFS only or calculating pi only). 
-* I'm still working on testing the part of the pipeline to calculate SFS
 * The example command-line is written using the example files provided in the folder `example_input_files`.
 
 ### Calculate genetic diversity only
@@ -88,5 +87,17 @@ git clone https://github.com/tnphung/popgen_tools.git
      5  7100000  7150000          28888 19.145 0.0006627319
      6  4750000  4800000          31231 26.425 0.0008461144
     ```
- ## Performance
+ ## Generate SFS only
+ * The script is written such that an SFS is generated in regions of the genome that is specified by a BED file. TODO: generate an SFS without specifying a BED file, so the default is to generate the SFS using all of the SNPs. 
+ 
+ ```
+ python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --sfs_out <path/to/output/for/sfs> --no_pi
+ ```
+ * For example:
+ ```
+ python popgen_tools.py --vcf_file example_input_files/example_vcf.vcf.gz --target_bed example_input_files/example_neutral_regions.bed --sfs_out example_output_files/sfs.out --no_pi
+ ```
+ 
+ ## Generate both the SFS and calculate genetic diversity:
+ * Do not turn on the `--no_sfs` or `no_pi` flags. 
  
