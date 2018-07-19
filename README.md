@@ -31,3 +31,7 @@ git clone https://github.com/tnphung/popgen_tools.git
     python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi> --total_SNPs <path/to/output/for/total_SNPs/in/regions> --names_list <path/to/a/list/of/individuals>
     ```
      - You can input a file that list the names of the individuals whose genetic diversity you want to calculate. List each individual per line. 
+     
+  b. Calculate genetic diversity in non-overlapping windows
+    - Often time, we are interested in calculating genetic diversity in each non-overlapping windows where we divide the genome into windows of 50kb, 100kb, or 1Mb (or any size of choice). 
+    - In each window, we would like to calculate genetic diversity. 
