@@ -1,5 +1,7 @@
 # popgen_tools
-This repository contains scripts that are often used in population genetics analyses (generating the site frequency spectrum or calculating genetic diversity)
+This repository contains scripts that are often used in population genetics analyses (generating the site frequency spectrum or calculating genetic diversity). 
+
+* Note that these scripts are still under development to add more features. 
 
 ## Getting started
 
@@ -11,54 +13,21 @@ git clone https://github.com/tnphung/popgen_tools.git
 
 ## Usage
 
-* This script generates both the folded site frequency spectrum and calculates genetic diversity in nonoverlapping windows from the VCF file
+* This script can generate a site frequency spectrum (SFS) and calculate genetic diversity (pi) 
 
-* For usage, do:
+1. Calculate genetic diversity 
+* Here, genetic diversity is defined as the average number of differences in DNA across all pairs of sequences in a sample
 
-```
-python popgen_tools.py -h                                       
-usage: popgen_tools.py [-h] --vcf_file VCF_FILE [--names_list NAMES_LIST]
-                       [--target_bed TARGET_BED] [--window_bed WINDOW_BED]
-                       [--sfs_out SFS_OUT] [--pi_out PI_OUT]
-                       [--total_SNPs TOTAL_SNPS] [--no_sfs] [--no_pi]
-                       [--window]
-
-This script generates a site frequency spectrum and calculates genetic
-diversity, pi. Pi is defined as the average number of DNA differences between
-all pairs of sequence).
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --vcf_file VCF_FILE   REQUIRED. Input the path to a VCF file. Either gzipped
-                        or not gzipped file works.
-  --names_list NAMES_LIST
-                        Input the path to the file that lists the individuals
-                        from the VCF file that you want to calculate genetic
-                        diversity or to generate the SFS.
-  --target_bed TARGET_BED
-                        Input the path to the BED file that specifies the
-                        coordinates to generate SFS or to calculate pi. For
-                        example, this file specificies the coordinates for the
-                        putatively neutral regions.
-  --window_bed WINDOW_BED
-                        Input the path the the BED file that specifies the
-                        coordinates for nonoverlapping windows.
-  --sfs_out SFS_OUT     Input the path for the output file for the site
-                        frequency spectrum. If this parameter is not
-                        specified, an output file called sfs.out will be
-                        outputted in the current directory.
-  --pi_out PI_OUT       Input the path for the output file for pi. If this
-                        parameter is not specified, an output file called
-                        pi.out will be outputted in the current directory.
-  --total_SNPs TOTAL_SNPS
-                        Input the path to the output file for the number of
-                        SNPs.
-  --no_sfs              Turn on this flag if you do not want to generate a
-                        site frequency spectrum.
-  --no_pi               Turn on this flag if you do not want to calculate
-                        genetic diversity.
-  --window              Turn on this flag if you want to calculate genetic
-                        diversity in windows. The default when calculating pi
-                        is to calculate pi in the target regions.
-
-```
+  a. Calculate genetic diversity within regions of the genome that is specified by a BED file
+    - We are typically interested in calculating genetic diversity in certain regions of the genome, such as in the neutral regions of the genome. 
+    - The command is:
+    ```
+    python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi> --total_SNPs <path/to/output/for/total_SNPs/in/regions>
+    ```
+    - Basically, one needs to supply a VCF file, a BED file specifing regions of the genome where you want to calculate genetic diversity, and the file names for output.
+    - The above command will calculate genetic diversity in each region of the genome whose start and end coordinates are specified by the BED file for all of the individuals in your VCF file. If you want to calculate genetic diversity for only a subset of individuals in your sample, the command is:
+    
+    ```
+    python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi> --total_SNPs <path/to/output/for/total_SNPs/in/regions> --names_list <path/to/a/list/of/individuals>
+    ```
+     - You can input a file that list the names of the individuals whose genetic diversity you want to calculate. List each individual per line. 
