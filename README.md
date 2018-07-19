@@ -66,7 +66,25 @@ git clone https://github.com/tnphung/popgen_tools.git
     - For this, the VCF file should be first filtered to contain only the SNPs that are found in the BED file. GATK can be used to do this. TODO: do this in the Python script, instead of using GATK
     - The command below calculate genetic diversity for each window using regions that are specified by the BED file. It returns a file where the first column is the start coordinate of the window, the second column is the end coordinate of the window, the third column is the total number of callable sites within that window, and the final column is pi in that window. The reason why we are interested in the total number of callable sites is because we are ultimately interested in calculating pi/site, which is equal to pi divided by the total number of callable sites. 
     ```
-    python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi>  --window_bed <path/to/BED/file/specifying/windows> --window --no_sfs
+    python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi>  --window_bed <path/to/BED/file/specifying/windows> --no_sfs --window
     ```
-    - Specifically:
+    - For example:
+    ```
+    python popgen_tools.py --vcf_file example_input_files/example_vcf_filtered.vcf.gz --target_bed example_input_files/example_neutral_regions.bed --pi_out example_output_files/pi_window.out --window_bed example_input_files/example_window.bed --no_sfs --window
+    ```
+    - The output file `pi_window.out` has four columns. The first column is the start coordinate of the window. The second column is the end coordinate of the window. The third column is the total number of callable sites in that window. The fourth column is pi. 
+    - Pi per site for a window is equal to the fourth column divided by the third column. For example:
+    ```
+    data = read.table("pi_window.out")
+    colnames(data) = c("start", "end", "total_callable", "pi")
+    data$pi_per_site = data$pi/data$total_callable
+    head(data)
+     start      end total_callable     pi  pi_per_site
+     1 12450000 12500000          15304 11.570 0.0007560115
+     2  7950000  8000000          13003 10.730 0.0008251942
+     3 15100000 15150000          11040  7.185 0.0006508152
+     4  8000000  8050000           5589  4.785 0.0008561460
+     5  7100000  7150000          28888 19.145 0.0006627319
+     6  4750000  4800000          31231 26.425 0.0008461144
+    ```
     
