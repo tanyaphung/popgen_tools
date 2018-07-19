@@ -17,7 +17,7 @@ git clone https://github.com/tnphung/popgen_tools.git
 * I'm still working on testing the part of the pipeline to calculate SFS
 * The example command-line is written using the example files provided in the folder `example_input_files`.
 
-1. Calculate genetic diversity only
+### Calculate genetic diversity only
 * Here, genetic diversity is defined as the average number of differences in DNA across all pairs of sequences in a sample
 
   a. Calculate genetic diversity within regions of the genome that is specified by a BED file
