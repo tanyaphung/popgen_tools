@@ -35,3 +35,10 @@ git clone https://github.com/tnphung/popgen_tools.git
   b. Calculate genetic diversity in non-overlapping windows
     - Often time, we are interested in calculating genetic diversity in each non-overlapping windows where we divide the genome into windows of 50kb, 100kb, or 1Mb (or any size of choice). 
     - In each window, we would like to calculate genetic diversity. 
+    - Right now, the scripts are written such that in each non-overlapping window, we want to calculate genetic diversity within regions that are specified by another BED file. 
+    - For this, the VCF file should be first filtered to contain only the SNPs that are found in the BED file. 
+    - The command below calculate genetic diversity for each window using regions that are specified by the BED file. It returns a file where the first column is the start coordinate of the window, the second column is the end coordinate of the window, the third column is the total number of callable sites within that window, and the final column is pi in that window. The reason why we are interested in the total number of callable sites is because we are ultimately interested in calculating pi/site, which is equal to pi divided by the total number of callable sites. 
+    ```
+    python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --pi_out <path/to/output/for/pi>  --window_bed <path/to/BED/file/specifying/windows> --window
+    ```
+    
