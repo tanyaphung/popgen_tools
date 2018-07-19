@@ -3,7 +3,6 @@ import argparse
 
 #TODO: Add error checking for inputs
 #TODO: When generating an SFS, allow for the requirement of target bed to be optional
-#TODO: Instead of inputting a list of individuals, the default should be to calculate pi and to generate SFS for all of the individuals in the vcf file
 
 def parse_args():
 	"""
@@ -17,10 +16,10 @@ def parse_args():
 						help='REQUIRED. Input the path to a VCF file. Either gzipped or '
 							 'not gzipped file works.')
 
-	parser.add_argument('--names_list', required=True,
-						help='REQUIRED. Input the path to the file that lists the individuals from '
+	parser.add_argument('--names_list', required=False,
+						help='Input the path to the file that lists the individuals from '
 							 'the VCF file that you want to calculate genetic diversity '
-							 'or to generate the SFS.')  #TODO: make this optional and the default is to use all of the individuals in the VCF file
+							 'or to generate the SFS.')
 
 	parser.add_argument('--target_bed', required=False,
 						help='Input the path to the BED file that specifies the coordinates '
@@ -67,10 +66,14 @@ def main():
 
 	args = parse_args()
 
-	if args.no_sfs is not True:
-
+	if args.names_list:
 		# Find the index of the individuals whose genetic diversity you want to calculate
 		names_index = find_index(args.vcf_file, args.names_list)
+
+	else:
+		names_index = find_index_all(args.vcf_file)
+
+	if args.no_sfs is not True:
 
 		# Calculate the number of alternate alleles for each variant.
 		alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
@@ -91,8 +94,6 @@ def main():
 	if args.no_pi is not True:
 
 		if args.window is not True: #calculate pi not in non-overlapping windows
-			# Find the index of the individuals whose genetic diversity you want to calculate
-			names_index = find_index(args.vcf_file, args.names_list)
 
 			# Calculate allele frequency
 			variants_af = compute_af(args.vcf_file, names_index)
@@ -115,8 +116,6 @@ def main():
 			total_SNPs_outfile.close()
 
 		else:
-			# Find the index of the individuals whose genetic diversity you want to calculate
-			names_index = find_index(args.vcf_file, args.names_list)
 
 			# Calculate allele frequency
 			variants_af = compute_af(args.vcf_file, names_index)

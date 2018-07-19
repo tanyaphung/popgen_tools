@@ -29,6 +29,20 @@ def find_index(vcf_file, names_file):
             name_index.append(index[name])
     return name_index
 
+def find_index_all(vcf_file):
+    name_index = []
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            if line.startswith('#CHROM'):
+                items = line.split('\t')
+                for i in range(9, len(items)):
+                    name_index.append(i)
+                break
+
+    return name_index
+
 def count_alt_allele(vcf_file, names_index, bed_file):
     ranges = []
     with open(bed_file, 'r') as f:
