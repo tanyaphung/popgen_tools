@@ -98,6 +98,14 @@ git clone https://github.com/tnphung/popgen_tools.git
  python popgen_tools.py --vcf_file example_input_files/example_vcf.vcf.gz --target_bed example_input_files/example_neutral_regions.bed --sfs_out example_output_files/sfs.out --no_pi
  ```
  
+ ## Generate SFS using all of the variants in the VCF file
+ * With the previous command, you have to supply a BED file (for example, a BED file defining neutral regions). Here, this is an option to calculate the SFS using all of the variants in the VCF file, by turning on the flag `--sfs_no_target_bed`.
+ 
+ ```
+ python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --sfs_out <path/to/output/for/sfs> --no_pi --sfs_no_target_bed
+ ```
+ 
+ 
  ## Generate both the SFS and calculate genetic diversity:
  * Do not turn on the `--no_sfs` or `no_pi` flags. 
  
