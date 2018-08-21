@@ -82,6 +82,38 @@ def count_alt_allele(vcf_file, names_index, bed_file):
                         alt_allele_count.append(count)
     return alt_allele_count
 
+def count_alt_allele_no_target_bed(vcf_file, names_index):
+
+    alt_allele_count = []
+
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            if not line.startswith('#'):
+                items = line.split('\t')
+                count = 0
+                if items[8] == 'GT':
+                    for i in names_index:
+                        genotype = items[i]
+                        if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                or genotype == '1/0':
+                            count += 1
+                        if genotype == '1|1' or genotype == '1/1':
+                            count += 2
+                    alt_allele_count.append(count)
+
+                else:
+                    for i in names_index:
+                        genotype = items[i].split(':')[0]
+                        if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                or genotype == '1/0':
+                            count += 1
+                        if genotype == '1|1' or genotype == '1/1':
+                            count += 2
+                    alt_allele_count.append(count)
+    return alt_allele_count
+
 
 def make_sfs(num_seq, alt_allele_count):
     """

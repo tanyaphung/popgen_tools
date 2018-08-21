@@ -58,6 +58,10 @@ def parse_args():
 							 ' in windows. The default when calculating pi is to calculate'
 							 ' pi in the target regions.')
 
+	parser.add_argument('--sfs_no_target_bed', action='store_true', default=False,
+						help='Turn on this flag if you are making the SFS using all of the '
+							 'variants from the VCF file.')
+
 	args = parser.parse_args()
 	return args
 
@@ -75,21 +79,44 @@ def main():
 
 	if args.no_sfs is not True:
 
+		if args.sfs_no_target_bed: #when this flag is turned on, use all of the variants from the
+		#  VCF file
 		# Calculate the number of alternate alleles for each variant.
-		alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
+			alt_allele_count_no_target_bed = count_alt_allele_no_target_bed(args.vcf_file, names_index)
 
-		# Generate a folded site frequency spectrum
-		sfs = make_sfs(len(names_index)*2, alt_allele_count)
+			# Generate a folded site frequency spectrum
+			sfs = make_sfs(len(names_index) * 2, alt_allele_count_no_target_bed)
 
-		outfile = open(args.sfs_out, 'w')
-		header = ['frequency', 'num_variants']
-		outfile.write('\t'.join(header) + '\n')
+			outfile = open(args.sfs_out, 'w')
+			header = ['frequency', 'num_variants']
+			outfile.write('\t'.join(header) + '\n')
 
-		for k, v in sfs.items():
-			out = [str(k), str(v)]
-			outfile.write('\t'.join(out) + '\n')
+			for k, v in sfs.items():
+				out = [str(k), str(v)]
+				outfile.write('\t'.join(out) + '\n')
 
-		outfile.close()
+			outfile.close()
+
+		else:
+
+			# Calculate the number of alternate alleles for each variant.
+			alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
+
+			for i in alt_allele_count:
+				print (i)
+
+			# Generate a folded site frequency spectrum
+			sfs = make_sfs(len(names_index)*2, alt_allele_count)
+
+			outfile = open(args.sfs_out, 'w')
+			header = ['frequency', 'num_variants']
+			outfile.write('\t'.join(header) + '\n')
+
+			for k, v in sfs.items():
+				out = [str(k), str(v)]
+				outfile.write('\t'.join(out) + '\n')
+
+			outfile.close()
 
 	if args.no_pi is not True:
 
