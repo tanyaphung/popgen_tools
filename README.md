@@ -102,7 +102,7 @@ git clone https://github.com/tnphung/popgen_tools.git
  * With the previous command, you have to supply a BED file (for example, a BED file defining neutral regions). Here, this is an option to calculate the SFS using all of the variants in the VCF file, by turning on the flag `--sfs_no_target_bed`.
  
  ```
- python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --sfs_out <path/to/output/for/sfs> --no_pi --sfs_no_target_bed
+ python popgen_tools.py --vcf_file <path/to/VCF> --sfs_out <path/to/output/for/sfs> --no_pi --sfs_no_target_bed
  ```
  
  
