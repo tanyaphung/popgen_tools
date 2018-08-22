@@ -43,7 +43,7 @@ def find_index_all(vcf_file):
 
     return name_index
 
-def count_alt_allele(vcf_file, names_index, bed_file):
+def count_alt_allele_slow(vcf_file, names_index, bed_file):
     ranges = []
     with open(bed_file, 'r') as f:
         for l in f:
@@ -82,6 +82,48 @@ def count_alt_allele(vcf_file, names_index, bed_file):
                         alt_allele_count.append(count)
     return alt_allele_count
 
+def count_alt_allele(vcf_file, names_index, bed_file):
+    sites_set = set()
+    with open(bed_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            items = line.split('\t')
+            for i in range(int(items[1]), int(items[2])):
+                sites_set.add(i)
+
+    alt_allele_count = []
+    # snps = 0
+    open_func = file_test(vcf_file)
+    with open_func(vcf_file, 'r') as f:
+        for l in f:
+            line = l.rstrip('\n')
+            if not line.startswith('#'):
+                items = line.split('\t')
+                if int(items[1])-1 in sites_set:
+                    # snps += 1
+                    count = 0
+                    if items[8] == 'GT':
+                        for i in names_index:
+                            genotype = items[i]
+                            if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                    or genotype == '1/0':
+                                count += 1
+                            if genotype == '1|1' or genotype == '1/1':
+                                count += 2
+                        alt_allele_count.append(count)
+
+                    else:
+                        for i in names_index:
+                            genotype = items[i].split(':')[0]
+                            if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' \
+                                    or genotype == '1/0':
+                                count += 1
+                            if genotype == '1|1' or genotype == '1/1':
+                                count += 2
+                        alt_allele_count.append(count)
+    # print (snps)
+    return alt_allele_count
+
 def count_alt_allele_no_target_bed(vcf_file, names_index):
 
     alt_allele_count = []
@@ -112,6 +154,7 @@ def count_alt_allele_no_target_bed(vcf_file, names_index):
                         if genotype == '1|1' or genotype == '1/1':
                             count += 2
                     alt_allele_count.append(count)
+    # print (len(alt_allele_count))
     return alt_allele_count
 
 

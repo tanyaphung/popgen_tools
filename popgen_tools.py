@@ -102,9 +102,6 @@ def main():
 			# Calculate the number of alternate alleles for each variant.
 			alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
 
-			for i in alt_allele_count:
-				print (i)
-
 			# Generate a folded site frequency spectrum
 			sfs = make_sfs(len(names_index)*2, alt_allele_count)
 
