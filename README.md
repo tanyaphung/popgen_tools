@@ -88,23 +88,29 @@ git clone https://github.com/tnphung/popgen_tools.git
      6  4750000  4800000          31231 26.425 0.0008461144
     ```
  ## Generate SFS only
- * The script is written such that an SFS is generated in regions of the genome that is specified by a BED file. TODO: generate an SFS without specifying a BED file, so the default is to generate the SFS using all of the SNPs. 
+ 
+ ### Generate the SFS using all of the variants in the VCF file
+ 
+ ```
+ python popgen_tools.py --vcf_file <path/to/VCF> --sfs_out <path/to/output/for/sfs> --no_pi --sfs_no_target_bed
+ ```
+ 
+ * For example:
+ ```
+python popgen_tools.py --vcf_file example_input_files/example_vcf_filtered.vcf.gz --sfs_out example_output_files/sfs.out_no.target.bed --no_pi --sfs_no_target_bed
+ ```
+ 
+ ### Generate the SFS within regions of the genome defined by a BED file
  
  ```
  python popgen_tools.py --vcf_file <path/to/VCF> --target_bed <path/to/BED> --sfs_out <path/to/output/for/sfs> --no_pi
  ```
  * For example:
  ```
- python popgen_tools.py --vcf_file example_input_files/example_vcf.vcf.gz --target_bed example_input_files/example_neutral_regions.bed --sfs_out example_output_files/sfs.out --no_pi
+ python popgen_tools.py --vcf_file example_input_files/example_vcf.vcf.gz --target_bed example_input_files/example_neutral_regions.bed --sfs_out example_output_files/sfs.out_use.target.bed --no_pi
  ```
  
- ## Generate SFS using all of the variants in the VCF file
- * With the previous command, you have to supply a BED file (for example, a BED file defining neutral regions). Here, this is an option to calculate the SFS using all of the variants in the VCF file, by turning on the flag `--sfs_no_target_bed`.
- 
- ```
- python popgen_tools.py --vcf_file <path/to/VCF> --sfs_out <path/to/output/for/sfs> --no_pi --sfs_no_target_bed
- ```
- 
+ * Note that if there are a lot of sites in the BED file, the script would require more memory. For reference, a BED file with about 5 million sites took about 11 minutes and about 600Mb of memory (running on UCLA hoffman2).
  
  ## Generate both the SFS and calculate genetic diversity:
  * Do not turn on the `--no_sfs` or `no_pi` flags. 
