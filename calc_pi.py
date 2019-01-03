@@ -1,4 +1,5 @@
 from helper_funcs import *
+
 def compute_af(vcf_file, names_index):
 
     variants = []
@@ -44,41 +45,18 @@ def compute_pi_all(afs, num_seq):
 
 def calculate(num):
     return 2*num*(1-num)
-# def compute_pi(bed_file, variants, afs, num_seq):
-#
-#     beds_pi = {}
-#     with open(bed_file, 'r') as f:
-#         for line in f:
-#             # s, e = line.split('\t'[1:])
-#             line = line.rstrip('\n')
-#             line = line.split('\t')
-#             start = int(line[1])
-#             end = int(line[2])
-#
-#             total_pi = 0
-#             for i in range(len(variants)):
-#                 if start <= variants[i] and variants[i] < end:
-#                     pi = 2* afs[i] * (1-afs[i])
-#                     total_pi += pi
-#                 elif variants[i] >= end:
-#                     break
-#
-#             total_pi_adjusted = (num_seq/(num_seq-1))*total_pi
-#             beds_pi[(start, end)] = total_pi_adjusted
-#
-#     return beds_pi
 
-def compute_pi(bed_file, variants, afs, num_seq):
+def compute_pi_target(bed_file, variants, afs, num_seq):
     vals_in = zip(*(variants, afs))
     out_dict = {}
     beds_pi = {}
     with open(bed_file, 'r') as f:
         for line in f:
-            _, s, e = line.split('\t')
+            chrName, s, e = line.split('\t')
             se_list = []
             for i in range(int(s), int(e)):
                 out_dict[i] = se_list
-            beds_pi[(int(s), int(e))] = se_list
+            beds_pi[(chrName, int(s), int(e))] = se_list
 
     list(map(lambda v: out_dict.get(int(v[0]), []).append(calculate(float(v[1]))), vals_in))
 

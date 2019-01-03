@@ -1,6 +1,7 @@
 from helper_funcs import *
 from calc_pi import *
 import argparse
+import pandas as pd
 
 #TODO: Add error checking for inputs
 #TODO: When generating an SFS, allow for the requirement of target bed to be optional
@@ -24,7 +25,6 @@ def parse_args():
 							 'do not use this flag.')
 
 	# Options for calculating pi
-
 	parser.add_argument('--pi_all', action='store_true', default=False,
 						help='Turn on this flag if you want to calculate pi using all of the sites in the VCF file.')
 
@@ -35,18 +35,11 @@ def parse_args():
 						help='Turn on this flag if you want to calculate pi in windows where the coordinates for the '
 							 'windows are defined by the BED file.')
 
-	# Options for output files
-	parser.add_argument('--pi_all_out', required=False,
-						help='If you want to save the value of pi_all into a file, specify '
-							 'it here. If this flag is not speficied, the value of pi will '
-							 'be printed out to the console.')
+	# Extra required files for different options of calculating pi
+	parser.add_argument('--target_bed', required=False,
+						help='If you want to calculate pi in regions of the genome specified by a BED file, input the '
+							 'path here')
 
-
-	# parser.add_argument('--target_bed', required=False,
-	# 					help='If you only want to generate the SFS and/or calculate genetic diversity for a subset of '
-	# 						 'sites in the VCF file, input the path to that file (in BED format) here. If you want to '
-	# 						 'perform the calculations for all of the variants in the VCF file, do not use this flag.')
-	#
 	# parser.add_argument('--window_bed', required=False,
 	# 					help='If you want to calculate genetic diversity in nonoverlapping window, use this flag.')
 	#
@@ -99,22 +92,43 @@ def main():
 	else:
 		names_index = find_index(args.vcf_file)
 
+	# For pi, get the variants and afs
+	variants_afs = compute_af(args.vcf_file, names_index)
+
 	# Check if the user wants to calculate pi using all of the sites in the VCF file.
 	if args.pi_all:
 		# Calculate allele frequency
-		afs = compute_af(args.vcf_file, names_index)[1]
+		afs = variants_afs[1]
 		# Compute pi_all
 		pi_all = compute_pi_all(afs, len(names_index)*2)
 
-		# If there is an output file to store the value of pi_all, save the value to that file,
-		# otherwise, print to the console
-		if args.pi_all_out:
-			with open(args.pi_all_out, 'a') as out:
-				out.write('Pi for all of the sites in the VCF file is ' + str(pi_all))
-		else:
-			print (pi_all)
+		with open('pi_all.out', 'a') as out:
+			out.write('pi_all' + '\n' + str(pi_all))
 
-	# if args.no_sfs is not True:
+
+	# Check if the user wants to calculate pi in regions of the genome specified by the BED file
+	if args.pi_target:
+		# Calculate adjusted pi
+		adjusted_pi = compute_pi_target(args.target_bed, variants_afs[0], variants_afs[1], len(names_index) * 2)
+		pi_outfile = open("pi_target.out", 'w')
+		header = ['chr', 'start', 'end', 'pi']
+		pi_outfile.write('\t'.join(header) + '\n')
+		for k, v in adjusted_pi[0].items():
+			out = [str(k[0]), str(k[1]), str(k[2]), str(v)]
+			pi_outfile.write('\t'.join(out) + '\n')
+		pi_outfile.close()
+
+		# Calculate pi per site
+		pi_target = pd.read_table("pi_target.out")
+		pi_total = pi_target['pi'].sum()
+		callable_sites = (pi_target['end'] - pi_target['start']).sum()
+		pi_per_site = pi_total/callable_sites
+
+		with open('pi_target_per_site.out', 'w') as out:
+			out.write('pi_per_site' + '\n' + str(pi_per_site))
+
+
+# if args.no_sfs is not True:
 	#
 	# 	if args.sfs_no_target_bed: #when this flag is turned on, use all of the variants from the
 	# 	#  VCF file
