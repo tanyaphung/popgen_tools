@@ -32,17 +32,17 @@ def parse_args():
 						help='Turn on this flag if you want to calculate pi in regions of the genome specified by a BED file.')
 
 	parser.add_argument('--pi_window', action='store_true', default=False,
-						help='Turn on this flag if you want to calculate pi in windows where the coordinates for the '
-							 'windows are defined by the BED file.')
+						help='Turn on this flag if you want to calculate pi in windows in the presence of target_bed file.')
 
 	# Extra required files for different options of calculating pi
 	parser.add_argument('--target_bed', required=False,
 						help='If you want to calculate pi in regions of the genome specified by a BED file, input the '
-							 'path here')
+							 'path here.')
 
-	# parser.add_argument('--window_bed', required=False,
-	# 					help='If you want to calculate genetic diversity in nonoverlapping window, use this flag.')
-	#
+	parser.add_argument('--window_bed', required=False,
+						help='If you want to calculate genetic diversity in window in the presence of target_bed file, '
+							 'input the path here.')
+
 	# # Providing the output files
 	# parser.add_argument('--sfs_out', required=False,
 	# 					help='Input the path for the output file for the site frequency spectrum. '
@@ -108,8 +108,13 @@ def main():
 
 	# Check if the user wants to calculate pi in regions of the genome specified by the BED file
 	if args.pi_target:
+		targets = []
+		with open(args.target_bed, 'r') as f:
+			for line in f:
+				chrName, s, e = line.split('\t')
+				targets.append((chrName, int(s), int(e)))
 		# Calculate adjusted pi
-		adjusted_pi = compute_pi_target(args.target_bed, variants_afs[0], variants_afs[1], len(names_index) * 2)
+		adjusted_pi = compute_pi_target(targets, variants_afs[0], variants_afs[1], len(names_index) * 2)
 		pi_outfile = open("pi_target.out", 'w')
 		header = ['chr', 'start', 'end', 'pi']
 		pi_outfile.write('\t'.join(header) + '\n')
@@ -126,6 +131,61 @@ def main():
 
 		with open('pi_target_per_site.out', 'w') as out:
 			out.write('pi_per_site' + '\n' + str(pi_per_site))
+
+	# Check if the user wants to calculate pi in regions of the genome specified by the BED file but also in windows
+	if args.pi_window:
+		targets = []
+		windows = []
+		with open(args.target_bed, 'r') as f:
+			for line in f:
+				chrName, s, e = line.split('\t')
+				targets.append((chrName, int(s), int(e)))
+		with open(args.window_bed, 'r') as f:
+			for line in f:
+				_, s, e = line.split('\t')
+				windows.append((int(s), int(e)))
+
+		# Make new targets
+		new_targets = place_target_into_window(windows, targets)
+
+		# Calculate adjusted pi
+		adjusted_pi = compute_pi_target(new_targets, variants_afs[0], variants_afs[1], len(names_index) * 2)
+
+		pi = []
+		for k, v in adjusted_pi[0].items():
+			pi.append(v)
+
+		results = calc_total_sites_pi_per_window(windows, new_targets, pi)
+
+		pi_outfile = open("pi_window.out", 'w')
+		for window in results[0]:
+			out = [str(window[0]), str(window[1]), str(results[0][window]), str(results[1][window])]
+			pi_outfile.write('\t'.join(out) + '\n')
+		pi_outfile.close()
+
+		# # Calculate the total callable site in each window
+		# windows = []
+		# with open(args.window_bed, 'r') as f:
+		# 	for line in f:
+		# 		_, s, e = line.split('\t')
+		# 		windows.append((int(s), int(e)))
+		#
+		# targets = []
+		# with open(args.target_bed, 'r') as f:
+		# 	for line in f:
+		# 		_, s, e = line.split('\t')
+		# 		targets.append((int(s), int(e)))
+		#
+		# total_callable = tabulate_callable_sites_each_window(windows, targets)
+		#
+		# pi_outfile = open(args.pi_out, 'w')
+		#
+		# for k, v in adjusted_pi[0].items():
+		# 	if total_callable[k] != 0:
+		# 		out = [str(k[0]), str(k[1]), str(total_callable[k]), str(v)]
+		# 		pi_outfile.write('\t'.join(out) + '\n')
+		#
+		# pi_outfile.close()
 
 
 # if args.no_sfs is not True:

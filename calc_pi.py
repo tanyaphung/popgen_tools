@@ -46,37 +46,50 @@ def compute_pi_all(afs, num_seq):
 def calculate(num):
     return 2*num*(1-num)
 
-def compute_pi_target(bed_file, variants, afs, num_seq):
+def compute_pi_target(targets, variants, afs, num_seq):
     vals_in = zip(*(variants, afs))
     out_dict = {}
     beds_pi = {}
-    with open(bed_file, 'r') as f:
-        for line in f:
-            chrName, s, e = line.split('\t')
-            se_list = []
-            for i in range(int(s), int(e)):
-                out_dict[i] = se_list
-            beds_pi[(chrName, int(s), int(e))] = se_list
+    # with open(bed_file, 'r') as f:
+    #     for line in f:
+    #         chrName, s, e = line.split('\t')
+    #         se_list = []
+    for target in targets:
+        se_list = []
+        for i in range(target[1], target[2]):
+            out_dict[i] = se_list
+        beds_pi[(target[0], target[1], target[2])] = se_list
 
     list(map(lambda v: out_dict.get(int(v[0]), []).append(calculate(float(v[1]))), vals_in))
 
     return {k: (sum(v))*(num_seq/(num_seq-1)) for (k, v) in beds_pi.items()}, {k: len(v) for (k, v) in beds_pi.items()}
 
+def place_target_into_window(windows, targets):
+    new_targets = []
+    for window in windows:
+        for target in targets:
+            if target[1] >= window[0] and target[1] < window[1]:
+                if target[2] <= window[1]:
+                    new_targets.append(target)
+                else:
+                    new_targets.append((target[0], target[1], window[1]))
+            elif target[1] < window[0] and target[2] > window[0]:
+                if target[2] < window[1]:
+                    new_targets.append((target[0], window[0], target[2]))
+                elif (target[2]-1) > (window[1]-1):
+                    new_targets.append((target[0], window[0], window[1]))
+    return new_targets
 
-def tabulate_callable_sites_each_window(windows, targets):
-    window_callable_sites = {}
-    for each_window in windows:
-        callable_sites = 0
-        for each_target in targets:
-            if each_target[0] >= each_window[0] and each_target[0] < each_window[1]:
-                if (each_target[1]-1) <= (each_window[1]-1):
-                    callable_sites += each_target[1] - each_target[0]
-                elif (each_target[1]-1) > (each_window[1]-1):
-                    callable_sites += each_window[1] - each_target[0]
-            elif each_target[0] < each_window[0] and each_target[1] > each_window[0]:
-                if (each_target[1]-1) < (each_window[1]-1):
-                    callable_sites += each_target[1] - each_window[0]
-                elif (each_target[1]-1) > (each_window[1]-1):
-                    callable_sites += each_window[1] - each_window[0]
-        window_callable_sites[each_window] = callable_sites
-    return window_callable_sites
+def calc_total_sites_pi_per_window(windows, new_targets, pi):
+    windows_total_sites = {}
+    windows_pi = {}
+    for window in windows:
+        total_sites = 0
+        total_pi = 0
+        for i in range(len(new_targets)):
+            if new_targets[i][1] >= window[0] and new_targets[i][2] <= window[1]:
+                total_sites += new_targets[i][2] - new_targets[i][1]
+                total_pi += pi[i]
+        windows_total_sites[window] = total_sites
+        windows_pi[window] = total_pi
+    return windows_total_sites, windows_pi
