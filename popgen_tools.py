@@ -8,8 +8,8 @@ def parse_args():
 	"""
 	Parsing command-line arguments
 	"""
-	parser = argparse.ArgumentParser(description='This script generates a site frequency '
-						'spectrum and calculates genetic diversity, pi. Pi is defined as '
+	parser = argparse.ArgumentParser(description='This program: (1) generates a 1-D site frequency '
+						'spectrum, and (2) calculates genetic diversity, pi. Pi is defined as '
 						'the average number of DNA differences between all pairs of sequence).')
 
 	parser.add_argument('--vcf_file', required=True,
@@ -17,18 +17,18 @@ def parse_args():
 							 'not gzipped file works.')
 
 	parser.add_argument('--names_list', required=False,
-						help='Input the path to the file that lists the individuals from '
-							 'the VCF file that you want to calculate genetic diversity '
-							 'or to generate the SFS.')
+						help='If you only want to generate the SFS and/or calculate genetic diversity for a subset of '
+							 'individuals from the VCF file, input the path to that file here. This file lists each '
+							 'individual on each line. If you want to perform the calculations for all of the individuals,'
+							 'do not use this flag.')
 
 	parser.add_argument('--target_bed', required=False,
-						help='Input the path to the BED file that specifies the coordinates '
-							 'to generate SFS or to calculate pi. For example, this file '
-							 'specificies the coordinates for the putatively neutral regions.')
+						help='If you only want to generate the SFS and/or calculate genetic diversity for a subset of '
+							 'sites in the VCF file, input the path to that file (in BED format) here. If you want to '
+							 'perform the calculations for all of the variants in the VCF file, do not use this flag.')
 
 	parser.add_argument('--window_bed', required=False,
-						help='Input the path the the BED file that specifies the coordinates '
-							 'for nonoverlapping windows.')
+						help='If you want to calculate genetic diversity in nonoverlapping window, use this flag.')
 
 	# Providing the output files
 	parser.add_argument('--sfs_out', required=False,
@@ -70,12 +70,14 @@ def main():
 
 	args = parse_args()
 
+	# Check if the user wants to perform the calculations for all of the individuals in the VCF or just a subset of
+	# individuals, which is specified by the presence of the argument names_list
 	if args.names_list:
 		# Find the index of the individuals whose genetic diversity you want to calculate
 		names_index = find_index(args.vcf_file, args.names_list)
 
 	else:
-		names_index = find_index_all(args.vcf_file)
+		names_index = find_index(args.vcf_file)
 
 	if args.no_sfs is not True:
 
