@@ -5,8 +5,10 @@ def compute_af(vcf_file, names_index):
     variants = []
     afs = []
 
-    open_func = file_test(vcf_file)
-    with open_func(vcf_file, 'r') as f:
+    file_test_result = file_test(vcf_file)
+    open_func = file_test_result[0]
+    mode = file_test_result[1]
+    with open_func(vcf_file, mode) as f:
         for l in f:
             line = l.rstrip('\n')
             if not line.startswith('#'):

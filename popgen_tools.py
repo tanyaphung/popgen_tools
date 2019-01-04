@@ -5,6 +5,7 @@ import pandas as pd
 
 #TODO: Add error checking for inputs
 #TODO: When generating an SFS, allow for the requirement of target bed to be optional
+#TODO: Have a check so that the chrName is concordant between target and window
 
 def parse_args():
 	"""

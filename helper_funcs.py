@@ -7,9 +7,9 @@ def file_test(vcf_file):
     This function checks if the input VCF file is gzip or not.
     """
     if vcf_file.endswith('.gz'):
-        return gzip.open
+        return gzip.open, 'rt'
     else:
-        return open
+        return open, 'r'
 
 def find_index(vcf_file, names_list=None):
     """
@@ -22,8 +22,10 @@ def find_index(vcf_file, names_list=None):
     name_index = []
     index = {}
 
-    open_func = file_test(vcf_file)
-    with open_func(vcf_file, 'r') as f:
+    file_test_result = file_test(vcf_file)
+    open_func = file_test_result[0]
+    mode = file_test_result[1]
+    with open_func(vcf_file, mode) as f:
         for l in f:
             line = l.rstrip('\n')
             if line.startswith('#CHROM'):
