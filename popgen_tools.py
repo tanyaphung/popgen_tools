@@ -103,8 +103,10 @@ def main():
 		# Compute pi_all
 		pi_all = compute_pi_all(afs, len(names_index)*2)
 
-		with open('pi_all.out', 'a') as out:
+		with open('pi_all.out', 'w') as out:
 			out.write('pi_all' + '\n' + str(pi_all))
+
+		print ('Pi for all of the variants in this population is ', str(pi_all))
 
 
 	# Check if the user wants to calculate pi in regions of the genome specified by the BED file
