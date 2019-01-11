@@ -26,6 +26,9 @@ def parse_args():
 							 'do not use this flag.')
 
 	# Options for calculating pi
+	parser.add_argument('--pi', action='store_true', default=False,
+						help='Turn on this flag if you want to calculate pi.')
+
 	parser.add_argument('--pi_all', action='store_true', default=False,
 						help='Turn on this flag if you want to calculate pi using all of the sites in the VCF file.')
 
@@ -81,7 +84,6 @@ def find_index(vcf_file, names_list=None):
 				items = line.split('\t')
 				if names_list is None:
 					for i in range(9, len(items)): #TODO: have to check if the genotype actually starts at position 9.
-						# print (i)
 						name_index.append(i)
 					break
 				else:
@@ -101,8 +103,6 @@ def compute_af(vcf_file, names_index):
 	afs = []
 
 	open_func, mode = file_test(vcf_file)
-	# open_func = file_test_result[0]
-	# mode = file_test_result[1]
 	with open_func(vcf_file, mode) as f:
 		for l in f:
 			line = l.rstrip('\n')
@@ -147,10 +147,6 @@ def compute_pi_target(targets, variants, afs, num_seq):
 	vals_in = zip(*(variants, afs))
 	out_dict = {}
 	beds_pi = {}
-	# with open(bed_file, 'r') as f:
-	#     for line in f:
-	#         chrName, s, e = line.split('\t')
-	#         se_list = []
 	for target in targets:
 		se_list = []
 		for i in range(target[1], target[2]):
@@ -191,6 +187,7 @@ def calc_total_sites_pi_per_window(windows, new_targets, pi):
 		windows_pi[window] = total_pi
 	return windows_total_sites, windows_pi
 
+
 def count_alt_allele_from_row(line, indices):
 	if line.startswith('#'):
 		return
@@ -223,10 +220,7 @@ def make_sfs(num_seq, alt_allele_count):
 	sfs = {i: frequency_count[i] + frequency_count[num_seq-i] for i in range(1, int(num_seq/2) + 1)}
 	sfs[int(num_seq/2)] = int(sfs[int(num_seq/2)]/2)
 
-	print (sfs)
-
 	return sfs
-
 
 
 def main():
@@ -242,8 +236,9 @@ def main():
 	else:
 		names_index = find_index(args.vcf_file)
 
+	if args.pi:
 	# For pi, get the variants and afs
-	# variants_afs = compute_af(args.vcf_file, names_index)
+		variants_afs = compute_af(args.vcf_file, names_index)
 
 	# Check if the user wants to calculate pi using all of the sites in the VCF file.
 	if args.pi_all:
@@ -322,114 +317,12 @@ def main():
 
 		# Generate a folded site frequency spectrum
 		sfs = make_sfs(len(names_index) * 2, alt_allele_count_all)
-	#
-	# outfile = open(args.sfs_out, 'w')
-	# header = ['frequency', 'num_variants']
-	# outfile.write('\t'.join(header) + '\n')
-	#
-	# for k, v in sfs.items():
-	# 	out = [str(k), str(v)]
-	# 	outfile.write('\t'.join(out) + '\n')
-	#
-	# outfile.close()
 
-
-# if args.no_sfs is not True:
-#
-# 	if args.sfs_no_target_bed: #when this flag is turned on, use all of the variants from the
-# 	#  VCF file
-# 	# Calculate the number of alternate alleles for each variant.
-# 		alt_allele_count_no_target_bed = count_alt_allele_no_target_bed(args.vcf_file, names_index)
-#
-# 		# Generate a folded site frequency spectrum
-# 		sfs = make_sfs(len(names_index) * 2, alt_allele_count_no_target_bed)
-#
-# 		outfile = open(args.sfs_out, 'w')
-# 		header = ['frequency', 'num_variants']
-# 		outfile.write('\t'.join(header) + '\n')
-#
-# 		for k, v in sfs.items():
-# 			out = [str(k), str(v)]
-# 			outfile.write('\t'.join(out) + '\n')
-#
-# 		outfile.close()
-#
-# 	else:
-#
-# 		# Calculate the number of alternate alleles for each variant.
-# 		alt_allele_count = count_alt_allele(args.vcf_file, names_index, args.target_bed)
-#
-# 		# Generate a folded site frequency spectrum
-# 		sfs = make_sfs(len(names_index)*2, alt_allele_count)
-#
-# 		outfile = open(args.sfs_out, 'w')
-# 		header = ['frequency', 'num_variants']
-# 		outfile.write('\t'.join(header) + '\n')
-#
-# 		for k, v in sfs.items():
-# 			out = [str(k), str(v)]
-# 			outfile.write('\t'.join(out) + '\n')
-#
-# 		outfile.close()
-
-# if args.no_pi is not True:
-#
-# 	# If the --no_pi flag is not turned on, then the user wants to calculate genetic diversity
-#
-# 	if args.window is not True: #calculate pi not in non-overlapping windows
-#
-# 		# Calculate allele frequency
-# 		variants_af = compute_af(args.vcf_file, names_index)
-#
-# 		# Calculate adjusted pi
-# 		adjusted_pi = compute_pi(args.target_bed, variants_af[0], variants_af[1], len(names_index)*2)
-#
-# 		# Save output for genetic diversity in a file
-# 		pi_outfile = open(args.pi_out, 'w')
-# 		for k, v in adjusted_pi[0].items():
-# 			out = [str(k[0]), str(k[1]), str(v)]
-# 			pi_outfile.write('\t'.join(out) + '\n')
-# 		pi_outfile.close()
-#
-# 		# Save output for the number of SNPs in a file
-# 		total_SNPs_outfile = open(args.total_SNPs, 'w')
-# 		for k, v in adjusted_pi[1].items():
-# 			out = [str(k[0]), str(k[1]), str(v)]
-# 			total_SNPs_outfile.write('\t'.join(out) + '\n')
-# 		total_SNPs_outfile.close()
-#
-# 	else:
-#
-# 		# Calculate allele frequency
-# 		variants_af = compute_af(args.vcf_file, names_index)
-#
-# 		# Calculate adjusted pi
-# 		adjusted_pi = compute_pi(args.window_bed, variants_af[0], variants_af[1], len(names_index)*2)
-#
-# 		# Calculate the total callable site in each window
-# 		windows = []
-# 		with open(args.window_bed, 'r') as f:
-# 			for line in f:
-# 				_, s, e = line.split('\t')
-# 				windows.append((int(s), int(e)))
-#
-# 		targets = []
-# 		with open(args.target_bed, 'r') as f:
-# 			for line in f:
-# 				_, s, e = line.split('\t')
-# 				targets.append((int(s), int(e)))
-#
-# 		total_callable = tabulate_callable_sites_each_window(windows, targets)
-#
-# 		pi_outfile = open(args.pi_out, 'w')
-#
-# 		for k, v in adjusted_pi[0].items():
-# 			if total_callable[k] != 0:
-# 				out = [str(k[0]), str(k[1]), str(total_callable[k]), str(v)]
-# 				pi_outfile.write('\t'.join(out) + '\n')
-#
-# 		pi_outfile.close()
-
+		sfs_outfile = open("sfs_all.out", "w")
+		header = ['af_bin', 'count']
+		sfs_outfile.write('\t'.join(header) + '\n')
+		out = [(str(k) , str(sfs[k])) for k in sfs]
+		sfs_outfile.write('\n'.join(['\t'.join(s) for s in out]))
 
 if __name__ == '__main__':
 	main()
