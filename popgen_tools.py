@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import gzip
 import collections
+import time
 
 #TODO: Add error checking for inputs
 #TODO: When generating an SFS, allow for the requirement of target bed to be optional
@@ -312,6 +313,9 @@ def main():
 
 	# Check if the user wants to calculate the sfs using all of the sites in the vcf file
 	if args.sfs_all:
+
+		s = time.time()
+
 		# Calculate the number of alternate alleles for each variant.
 		alt_allele_count_all = count_alt_allele_all(args.vcf_file, names_index)
 
@@ -323,6 +327,9 @@ def main():
 		sfs_outfile.write('\t'.join(header) + '\n')
 		out = [(str(k) , str(sfs[k])) for k in sfs]
 		sfs_outfile.write('\n'.join(['\t'.join(s) for s in out]))
+
+		e = time.time()
+		print ("Time %d ms" %int(e-s))
 
 if __name__ == '__main__':
 	main()
