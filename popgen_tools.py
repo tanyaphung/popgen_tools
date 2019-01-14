@@ -52,6 +52,10 @@ def parse_args():
 						help='If you want to calculate genetic diversity in window in the presence of target_bed file, '
 							 'input the path here.')
 
+	# Output files
+	parser.add_argument('--sfs_all_out', required=False,
+						help='Input the file to the output of sfs_all.')
+
 	args = parser.parse_args()
 	return args
 
@@ -322,7 +326,7 @@ def main():
 		# Generate a folded site frequency spectrum
 		sfs = make_sfs(len(names_index) * 2, alt_allele_count_all)
 
-		sfs_outfile = open("sfs_all.out", "w")
+		sfs_outfile = open(args.sfs_all_out, "w")
 		header = ['af_bin', 'count']
 		sfs_outfile.write('\t'.join(header) + '\n')
 		out = [(str(k) , str(sfs[k])) for k in sfs]
