@@ -77,28 +77,20 @@ def find_index(vcf_file, names_list=None):
     """
 
 	name_index = []
-	index = {}
 
-	file_test_result = file_test(vcf_file)
-	open_func = file_test_result[0]
-	mode = file_test_result[1]
+	open_func, mode = file_test(vcf_file)
 	with open_func(vcf_file, mode) as f:
-		for l in f:
-			line = l.rstrip('\n')
+		for line in f:
 			if line.startswith('#CHROM'):
 				items = line.split('\t')
 				if names_list is None:
-					for i in range(9, len(items)): #TODO: have to check if the genotype actually starts at position 9.
-						name_index.append(i)
+					name_index = [i for i in range(9, len(items)) if names_list is None]
 					break
 				else:
-					for i in range(9, len(items)):
-						index[items[i]] = i
+					index = {items[i] : i for i in range(9, len(items))}
 					with open(names_list, 'r') as f:
-						for l in f:
-							line = l.rstrip('\n')
-							name = line.split('\t')[0]
-							name_index.append(index[name])
+						individuals = [l.rstrip('\n') for l in f]
+						name_index = [index[i] for i in individuals]
 					break
 	return name_index
 
