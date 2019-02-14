@@ -56,6 +56,12 @@ def parse_args():
 	parser.add_argument('--sfs_all_out', required=False,
 						help='Input the file to the output of sfs_all.')
 
+	parser.add_argument('--pi_target_out', required=False,
+						help='Path to the output pi_target_out.')
+
+	parser.add_argument('--pi_target_per_site_out', required=False,
+						help='Path to the output pi_target_per_site_out.')
+
 	args = parser.parse_args()
 	return args
 
@@ -259,7 +265,7 @@ def main():
 				targets.append((chrName, int(s), int(e)))
 		# Calculate adjusted pi
 		adjusted_pi = compute_pi_target(targets, variants_afs[0], variants_afs[1], len(names_index) * 2)
-		pi_outfile = open("pi_target.out", 'w')
+		pi_outfile = open(args.pi_target_out, 'w')
 		header = ['chr', 'start', 'end', 'pi']
 		pi_outfile.write('\t'.join(header) + '\n')
 		for k, v in adjusted_pi[0].items():
@@ -268,12 +274,12 @@ def main():
 		pi_outfile.close()
 
 		# Calculate pi per site
-		pi_target = pd.read_table("pi_target.out")
+		pi_target = pd.read_table(args.pi_target_out)
 		pi_total = pi_target['pi'].sum()
 		callable_sites = (pi_target['end'] - pi_target['start']).sum()
 		pi_per_site = pi_total/callable_sites
 
-		with open('pi_target_per_site.out', 'w') as out:
+		with open(args.pi_target_per_site_out, 'w') as out:
 			out.write('pi_per_site' + '\n' + str(pi_per_site))
 
 	# Check if the user wants to calculate pi in regions of the genome specified by the BED file but also in windows
