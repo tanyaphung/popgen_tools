@@ -88,7 +88,7 @@ def find_index(vcf_file, names_list=None):
 	with open_func(vcf_file, mode) as f:
 		for line in f:
 			if line.startswith('#CHROM'):
-				items = line.split('\t')
+				items = line.rstrip('\n').split('\t')
 				if names_list is None:
 					name_index = [i for i in range(9, len(items)) if names_list is None]
 					break
