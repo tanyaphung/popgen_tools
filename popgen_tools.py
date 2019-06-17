@@ -115,7 +115,7 @@ def compute_af(vcf_file, names_index):
 				if items[8] == 'GT':
 					for i in names_index:
 						genotype = items[i]
-						if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
+						if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0' or genotype == '1':
 							count += 1
 						if genotype == '1|1' or genotype == '1/1':
 							count += 2
@@ -195,7 +195,7 @@ def count_alt_allele_from_row(line, indices):
 	if line.startswith('#'):
 		return
 	pop_subset = [line.split('\t')[i] for i in indices]
-	return sum([int(s[0]) + int(s[2]) for s in pop_subset if s[0] != '.' and s[2] != '.'])
+	return sum([int(s[0]) + int(s[2]) for s in pop_subset if s[0] != '.' and s[2] != '.' and s[0] != '/' and s[2] != '/' and s[0] != '|' and s[2] != '|'])
 
 
 def count_alt_allele_all(vcf, names_index):
