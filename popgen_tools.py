@@ -127,7 +127,7 @@ def compute_af(vcf_file, names_index):
 					if not any(i == './.' for i in genotypes): #TODO: think about how to deal with missing data
 						for i in names_index:
 							genotype = items[i].split(':')[0]
-							if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0':
+							if genotype == '0|1' or genotype == '1|0' or genotype == '0/1' or genotype == '1/0' or genotype == '1':
 								count += 1
 							if genotype == '1|1' or genotype == '1/1':
 								count += 2
