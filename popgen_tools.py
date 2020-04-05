@@ -102,7 +102,7 @@ def find_index(vcf_file, names_list=None):
                     break
     return name_index
 
-def compute_af(vcf_file, names_index):
+def compute_af(vcf_file, names_index, ploidy):
 
     variants = []
     afs = []
@@ -134,7 +134,10 @@ def compute_af(vcf_file, names_index):
                             if genotype == '1|1' or genotype == '1/1':
                                 count += 2
                     variants.append(int(items[1]) - 1)
-                    afs.append(float(count) / (len(names_index)*2))
+                    if ploidy == "diploid":
+                        afs.append(float(count) / (len(names_index)*2))
+                    elif ploidy == "haploid":
+                        afs.append(float(count) / len(names_index))
     return variants, afs
 
 def compute_pi_all(afs, num_seq):
@@ -193,17 +196,20 @@ def calc_total_sites_pi_per_window(windows, new_targets, pi):
     return windows_total_sites, windows_pi
 
 
-def count_alt_allele_from_row(line, indices):
+def count_alt_allele_from_row(line, indices, ploidy):
     if line.startswith('#'):
         return
     pop_subset = [line.split('\t')[i] for i in indices]
-    return sum([int(s[0]) + int(s[2]) for s in pop_subset if s[0] != '.' and s[2] != '.' and s[0] != '/' and s[2] != '/' and s[0] != '|' and s[2] != '|'])
+    if ploidy == 'diploid':
+        return sum([int(s[0]) + int(s[2]) for s in pop_subset if s[0] != '.' and s[2] != '.' and s[0] != '/' and s[2] != '/' and s[0] != '|' and s[2] != '|'])
+    elif ploidy == 'haploid':
+        return sum([int(s[0]) for s in pop_subset if s[0] != '.'])
 
 
-def count_alt_allele_all(vcf, names_index):
+def count_alt_allele_all(vcf, names_index, ploidy):
     open_func, mode = file_test(vcf)
     with open_func(vcf, mode) as f:
-        alt_allele_count = list(map(lambda l: count_alt_allele_from_row(l, names_index), f))
+        alt_allele_count = list(map(lambda l: count_alt_allele_from_row(l, names_index, ploidy), f))
         return alt_allele_count
 
 
@@ -243,26 +249,26 @@ def main():
 
     if args.pi:
         # For pi, get the variants and afs
-        variants_afs = compute_af(args.vcf_file, names_index)
+        variants_afs = compute_af(args.vcf_file, names_index, args.ploidy)
 
     # Check if the user wants to calculate pi using all of the sites in the VCF file.
     if args.pi_all:
         # Calculate allele frequency
         afs = variants_afs[1]
-    # Compute pi_all
-    if args.ploidy == "diploid":
-        pi_all = compute_pi_all(afs, len(names_index)*2)
-        with open('pi_all.out', 'w') as out:
-            out.write('pi_all' + '\n' + str(pi_all))
+        # Compute pi_all
+        if args.ploidy == "diploid":
+            pi_all = compute_pi_all(afs, len(names_index)*2)
+            with open('pi_all.out', 'w') as out:
+                out.write('pi_all' + '\n' + str(pi_all))
 
-        print ('Pi for all of the variants in this population is ', str(pi_all))
+            print ('Pi for all of the variants in this population is ', str(pi_all))
 
-    elif args.ploidy == "haploid":
-        pi_all = compute_pi_all(afs, len(names_index))
-        with open('pi_all.out', 'w') as out:
-            out.write('pi_all' + '\n' + str(pi_all))
+        elif args.ploidy == "haploid":
+            pi_all = compute_pi_all(afs, len(names_index))
+            with open('pi_all.out', 'w') as out:
+                out.write('pi_all' + '\n' + str(pi_all))
 
-        print ('Pi for all of the variants in this population is ', str(pi_all))
+            print ('Pi for all of the variants in this population is ', str(pi_all))
 
 
 
@@ -275,7 +281,10 @@ def main():
                 chrName, s, e = line.split('\t')
                 targets.append((chrName, int(s), int(e)))
         # Calculate adjusted pi
-        adjusted_pi = compute_pi_target(targets, variants_afs[0], variants_afs[1], len(names_index) * 2)
+        if args.ploidy == "diploid":
+            adjusted_pi = compute_pi_target(targets, variants_afs[0], variants_afs[1], len(names_index) * 2)
+        elif args.ploidy == "haploid":
+            adjusted_pi = compute_pi_target(targets, variants_afs[0], variants_afs[1], len(names_index))
         pi_outfile = open(args.pi_target_out, 'w')
         header = ['chr', 'start', 'end', 'pi']
         pi_outfile.write('\t'.join(header) + '\n')
@@ -330,10 +339,13 @@ def main():
         s = time.time()
 
         # Calculate the number of alternate alleles for each variant.
-        alt_allele_count_all = count_alt_allele_all(args.vcf_file, names_index)
+        alt_allele_count_all = count_alt_allele_all(args.vcf_file, names_index, args.ploidy)
 
         # Generate a folded site frequency spectrum
-        sfs = make_sfs(len(names_index) * 2, alt_allele_count_all)
+        if args.ploidy == 'diploid':
+            sfs = make_sfs(len(names_index) * 2, alt_allele_count_all)
+        elif args.ploidy == 'haploid':
+            sfs = make_sfs(len(names_index), alt_allele_count_all)
 
         sfs_outfile = open(args.sfs_all_out, "w")
         header = ['af_bin', 'count']
