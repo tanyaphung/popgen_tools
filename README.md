@@ -9,6 +9,12 @@ python popgen_tools.py --vcf_file {input} --sfs_all --sfs_all_out {output} --plo
 - The above command generates the SFS using all of the sites within the VCF file. This command will not do any filtering of variants. Therefore, if you want to generate a site frequeny spectrum for a subset of your sites in the VCF file, you would need to do the subset prior to running this command. 
 
 ## Calculate genetic diversity
+1. Pi
 ```
 python popgen_tools.py --vcf_file {input} --pi --ploidy {insert haploid or diploid} --pi_all
+```
+2. Pi per site
+
+```
+python popgen_tools.py --vcf_file {input} --pi --pi_target --target_bed {bed file representing high quality and neutral sites} --pi_target_out {output_filename_for_pi} --pi_target_per_site_out {output_filename_for_pi_per_site}
 ```
